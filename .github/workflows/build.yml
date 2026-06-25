@@ -7,60 +7,50 @@ on:
 permissions:
   contents: write
   pages: write
-  id-token: write
 
 jobs:
   flatpak:
     name: "Build and Release"
     runs-on: ubuntu-latest
-    container:
-      # Use gnome-46 as it is the current stable standard
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
-      options: --privileged
+    
+    # We remove the container block from the top level 
+    # and run it specifically for the build steps
     steps:
     - uses: actions/checkout@v4
 
-    # 1. Prepare Runtimes (Matching Fedora 40/44 standards)
-    - name: Install GNOME Runtimes
-      run: |
-        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-        flatpak remote-add --user --if-not-exists gnome-nightly https://nightly.gnome.org/gnome-nightly.flatpakrepo
-        flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
+    # 1. Install rsync on the Ubuntu Host (This will now work!)
+    - name: Install rsync on host
+      run: sudo apt-get update && sudo apt-get install -y rsync
 
-    # 2. Inject Themes via your Python script
-    - name: Inject Themes
-      run: python3 update_manifest.py
+    # 2. Build the app INSIDE the container
+    - name: Run Build in Fedora Container
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-46
+        options: -v ${{ github.workspace }}:/workspace --privileged
+        run: |
+          cd /workspace
+          # Prepare
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.gnome.Sdk//46 org.gnome.Platform//46
+          
+          # Inject & Build
+          python3 update_manifest.py
+          flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps --force-clean build-dir-stable org.gnome.TextEditor.json
+          flatpak build-update-repo wolf-os-apps
+          flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
 
-    # 3. Build STABLE (Creates Repo and Bundle)
-    - name: Build Stable
-      run: |
-        flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps --force-clean build-dir-stable org.gnome.TextEditor.json
-        flatpak build-update-repo wolf-os-apps
-        flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
-        
-    # 4. Create a GitHub Release (The "Downloadable" version)
+    # 3. Create the Release on the host
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: latest-build
         name: "Wolf-OS App Store - Latest"
-        files: |
-          gnome-text-editor-stable.flatpak    
+        files: gnome-text-editor-stable.flatpak    
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 5. Install rsync (Required for the deployment action)
-    - name: Install rsync
-      run: apt install -y rsync
-
-    # 6. Deploy the Repo to GitHub Pages (The "Remote" version)
-    - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: wolf-os-apps
-        branch: gh-pages    
-    
-    # 7. Deploy the Repo to GitHub Pages (The "Remote" version)
+    # 4. Deploy the Repo to GitHub Pages on the host
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
