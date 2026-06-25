@@ -2,10 +2,11 @@ name: Build and Release Custom Editor
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
-# Add this block to give the runner permission to create the release
 permissions:
   contents: write
+  pages: write
 
 jobs:
   flatpak:
@@ -14,43 +15,47 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # 1. Install rsync on the Ubuntu Host
+    # 1. Install rsync on the Ubuntu Host (Needed for Pages deployment)
     - name: Install rsync
       run: sudo apt update && sudo apt install -y rsync    
 
-    # 2. Build the app INSIDE the container
-    - name: Run Build in Fedora Container
+    # 2. PERFORM THE ENTIRE BUILD INSIDE THE CONTAINER
+    - name: Flatpak Build Environment
       uses: addnab/docker-run-action@v3
       with:
-        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
+        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-47
         options: -v ${{ github.workspace }}:/workspace --privileged   
         run: |
+          # Move into the shared workspace
           cd /workspace
+          
+          # 1. Install Runtimes (Using 47 to match the image)
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
+          
+          # 2. Prepare the Manifest (Running your Python script)
+          python3 update_manifest.py
+          
+          # 3. Build the Repository and Bundle
+          # Fixed the space between --repo and --force-clean
+          flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps --force-clean build-dir-stable org.gnome.TextEditor.json
+          flatpak build-update-repo wolf-os-apps
+          flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
 
-    # 2. Inject Themes via your Python script
-    - name: Inject Themes
-      run: python3 update_manifest.py
-
-    # 3. Build STABLE
-    - name: Build Stable
-      run: |
-        flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps--force-clean build-dir-stable org.gnome.TextEditor.json
-        flatpak build-update-repo wolf-os-apps
-        flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
-
-    # 5. Create a GitHub Release and upload the files
+    # 3. Create a GitHub Release (Back on the Ubuntu Host)
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: latest-build
         name: "Wolf-OS App Store - Latest"
-        body: |
-          Automated build of GNOME Text Editor featuring 12 custom themes.
-          Primary Theme: Deep Oceanic.
-        files: |
-          gnome-text-editor-stable.flatpak
+        files: gnome-text-editor-stable.flatpak
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 4. Deploy the Repo to GitHub Pages (Back on the Ubuntu Host)
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: wolf-os-apps
+        branch: gh-pages
 
