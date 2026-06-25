@@ -19,7 +19,7 @@ jobs:
     
     # 1. Install rsync on the Ubuntu Host
     - name: Install rsync
-      run: sudo apt-get update && sudo apt-get install -y rsync    
+      run: apt-get update && sudo apt-get install -y rsync    
 
     # 1. Prepare Runtimes
     - name: Install GNOME Runtimes
