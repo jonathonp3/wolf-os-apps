@@ -26,13 +26,13 @@ jobs:
     - name: Run Build in Fedora Container
       uses: addnab/docker-run-action@v3
       with:
-        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-46
+        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
         options: -v ${{ github.workspace }}:/workspace --privileged
         run: |
           cd /workspace
           # Prepare
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.gnome.Sdk//46 org.gnome.Platform//46
+          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
           
           # Inject & Build
           python3 update_manifest.py
