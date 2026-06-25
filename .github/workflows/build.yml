@@ -11,22 +11,23 @@ jobs:
   flatpak:
     name: "Build and Release"
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
-      options: -v ${{ github.workspace }}:/workspace --privileged
     steps:
     - uses: actions/checkout@v4
     
     # 1. Install rsync on the Ubuntu Host
     - name: Install rsync
-      run: apt-get update && apt-get install -y rsync    
+      run: sudo apt update && sudo apt install -y rsync    
 
-    # 1. Prepare Runtimes
-    - name: Install GNOME Runtimes
-      run: |
-        cd /workspace
-        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-        flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
+    # 2. Build the app INSIDE the container
+    - name: Run Build in Fedora Container
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
+        options: -v ${{ github.workspace }}:/workspace --privileged   
+        run: |
+          cd /workspace
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
 
     # 2. Inject Themes via your Python script
     - name: Inject Themes
