@@ -26,21 +26,24 @@ jobs:
         image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-47
         options: -v ${{ github.workspace }}:/workspace --privileged   
         run: |
-          # Move into the shared workspace
           cd /workspace
           
-          # 1. Install Runtimes (Using 47 to match the image)
+          # 1. Setup Runtimes
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
+          flatpak install --user -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
           
-          # 2. Prepare the Manifest (Running your Python script)
+          # 2. Inject Themes (Python)
           python3 update_manifest.py
           
           # 3. Build the Repository and Bundle
-          # Fixed the space between --repo and --force-clean
           flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps --force-clean build-dir-stable org.gnome.TextEditor.json
           flatpak build-update-repo wolf-os-apps
           flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
+
+          # THE FIX: Unlock permissions for the Host Runner
+          # This ensures the Ubuntu 'rsync' tool can read the files
+          chmod -R 777 /workspace/wolf-os-apps
+          chmod 666 /workspace/gnome-text-editor-stable.flatpak
 
     # 3. Create a GitHub Release (Back on the Ubuntu Host)
     - name: Release
