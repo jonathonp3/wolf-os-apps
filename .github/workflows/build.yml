@@ -51,7 +51,7 @@ jobs:
 
     # 5. Install rsync (Required for the deployment action)
     - name: Install rsync
-      run: dnf install -y rsync
+      run: apt install -y rsync
 
     # 6. Deploy the Repo to GitHub Pages (The "Remote" version)
     - name: Deploy to GitHub Pages
