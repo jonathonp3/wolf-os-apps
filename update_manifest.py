@@ -1,26 +1,16 @@
 import json
 import os
 import glob
-import urllib.request
 from collections import OrderedDict
 
 # --- CONFIGURATION ---
-DEVEL_MANIFEST_URL = "https://gitlab.gnome.org/GNOME/gnome-text-editor/-/raw/main/org.gnome.TextEditor.Devel.json"
 STABLE_MANIFEST = "org.gnome.TextEditor.json"
-DEVEL_MANIFEST = "org.gnome.TextEditor.Devel.json"
 DEFAULT_THEME_ID = "solarized-light-cosmic-latte"
 THEME_FILES = sorted(glob.glob("*.xml"))
 
-def download_devel_manifest():
-    print(f"Downloading latest Devel manifest...")
-    try:
-        urllib.request.urlretrieve(DEVEL_MANIFEST_URL, DEVEL_MANIFEST)
-        print(" -> Download successful.")
-    except Exception as e:
-        print(f" -> Error downloading Devel manifest: {e}")
-
 def update_manifest(filename, app_id, branch_name):
     if not os.path.exists(filename):
+        print(f" -> Error: {filename} not found.")
         return
 
     with open(filename, 'r') as f:
@@ -77,7 +67,6 @@ def update_manifest(filename, app_id, branch_name):
     print(f"Success! {filename} updated.")
 
 if __name__ == "__main__":
-    download_devel_manifest()
-    update_manifest(DEVEL_MANIFEST, "org.gnome.TextEditor.Devel", "master")
+    # Run only for the stable version
     update_manifest(STABLE_MANIFEST, "org.gnome.TextEditor", "stable")
 
