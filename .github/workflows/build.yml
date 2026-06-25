@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # 1. Install rsync on the Ubuntu Host (Needed for Pages deployment)
+    # 1. Install rsync on the Ubuntu Host
     - name: Install rsync
       run: sudo apt update && sudo apt install -y rsync    
 
@@ -28,24 +28,23 @@ jobs:
         run: |
           cd /workspace
           
-          # 1. Setup Runtimes
+          # Setup Runtimes
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
+          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
           
-          # 2. Inject Themes (Python)
+          # Prepare the Manifest
           python3 update_manifest.py
           
-          # 3. Build the Repository and Bundle
-          flatpak-builder --user --disable-rofiles-fuse --repo=wolf-os-apps --force-clean build-dir-stable org.gnome.TextEditor.json
-          flatpak build-update-repo wolf-os-apps
-          flatpak build-bundle wolf-os-apps gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
+          # THE FIX: We use 'deploy-repo' as the folder name to avoid clashing with repo name
+          flatpak-builder --user --disable-rofiles-fuse --repo=deploy-repo --force-clean build-dir-stable org.gnome.TextEditor.json
+          flatpak build-update-repo deploy-repo
+          flatpak build-bundle deploy-repo gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
 
-          # THE FIX: Unlock permissions for the Host Runner
-          # This ensures the Ubuntu 'rsync' tool can read the files
-          chmod -R 777 /workspace/wolf-os-apps
+          # Unlock permissions for the Host Runner
+          chmod -R 777 /workspace/deploy-repo
           chmod 666 /workspace/gnome-text-editor-stable.flatpak
 
-    # 3. Create a GitHub Release (Back on the Ubuntu Host)
+    # 3. Create a GitHub Release
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
@@ -55,10 +54,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 4. Deploy the Repo to GitHub Pages (Back on the Ubuntu Host)
+    # 4. Deploy the Repo to GitHub Pages
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: wolf-os-apps
+        folder: deploy-repo # Points to the new unique folder name
         branch: gh-pages
 
