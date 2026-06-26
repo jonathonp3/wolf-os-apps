@@ -39,7 +39,7 @@ jobs:
           # 4. Build and SIGN (Check for success)
           flatpak-builder --user --disable-rofiles-fuse \
             --repo=deploy-repo \
-            --gpg-sign=12674D930F2D7638CEC8CB9284F5E4E7141D62D5 \
+            --gpg-sign=4B0918C79F2C0FD0C1E16A9508A8BFE1D242E60D  \
             --force-clean build-dir-stable org.gnome.TextEditor.json || exit 1
           
           # 5. Sign the repository metadata
