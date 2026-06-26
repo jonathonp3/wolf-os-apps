@@ -31,7 +31,7 @@ jobs:
 
           # 2. Setup Runtimes
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
+          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
           
           # 3. Inject Themes
           python3 update_manifest.py
