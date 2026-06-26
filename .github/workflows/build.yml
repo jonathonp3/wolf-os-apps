@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   pages: write
+  id-token: write
 
 jobs:
   flatpak:
@@ -15,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # 1. Install rsync on the Ubuntu Host
+    # 1. Install rsync on the Ubuntu Host (Required for Pages deployment)
     - name: Install rsync
       run: sudo apt update && sudo apt install -y rsync    
 
@@ -26,25 +27,37 @@ jobs:
         image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-47
         options: -v ${{ github.workspace }}:/workspace --privileged   
         run: |
+          # Move into the shared workspace
           cd /workspace
           
-          # Setup Runtimes
+          # 1. Import your Private GPG Key for signing
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+
+          # 2. Setup Runtimes (Using 47 to match the image)
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
+          flatpak install --user -y flathub org.gnome.Sdk//47 org.gnome.Platform//47
           
-          # Prepare the Manifest
+          # 3. Prepare the Manifest (Running your Python theme injector)
           python3 update_manifest.py
           
-          # THE FIX: We use 'deploy-repo' as the folder name to avoid clashing with repo name
-          flatpak-builder --user --disable-rofiles-fuse --repo=deploy-repo --force-clean build-dir-stable org.gnome.TextEditor.json
-          flatpak build-update-repo deploy-repo
+          # 4. Build and SIGN the Repository
+          # Use full fingerprint: 4B0918C79F2C0FD0C1E16A9508A8BFE1D242E60D
+          flatpak-builder --user --disable-rofiles-fuse \
+            --repo=deploy-repo \
+            --gpg-sign=4B0918C79F2C0FD0C1E16A9508A8BFE1D242E60D \
+            --force-clean build-dir-stable org.gnome.TextEditor.json
+          
+          # 5. Sign the repository metadata
+          flatpak build-update-repo --gpg-sign=12674D930F2D7638CEC8CB9284F5E4E7141D62D5 deploy-repo
+          
+          # 6. Create the standalone bundle for GitHub Releases
           flatpak build-bundle deploy-repo gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
 
-          # Unlock permissions for the Host Runner
+          # 7. Unlock permissions so the Ubuntu host runner can access the files
           chmod -R 777 /workspace/deploy-repo
           chmod 666 /workspace/gnome-text-editor-stable.flatpak
 
-    # 3. Create a GitHub Release
+    # 3. Create a GitHub Release (On the Ubuntu Host)
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
@@ -54,10 +67,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 4. Deploy the Repo to GitHub Pages
+    # 4. Deploy the Signed Repo to GitHub Pages (On the Ubuntu Host)
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: deploy-repo # Points to the new unique folder name
+        folder: deploy-repo
         branch: gh-pages
 
