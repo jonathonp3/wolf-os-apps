@@ -21,17 +21,44 @@ Custom Flatpak build for GNOME Text Editor with 12+ premium themes and critical 
 
 
 ## 📥 Getting Started
+
+
+1. Remove the stock Fedora Flatpak (The 'Old' version):
 ```bash
-Clone the repository
+flatpak uninstall --system -y org.gnome.TextEditor
+```
+
+2. Add the Wolf-OS Custom App Store
+We download your public GPG key to ensure the remote is trusted immediately
+```bash
+wget2 -q -O /tmp/wolf-os-apps.gpg https://raw.githubusercontent.com/jonathonp3/wolf-os-apps/main/wolf-os-apps.gpg
+```
+Add the remote and import the key:
+```bash
+flatpak remote-add --system --if-not-exists --gpg-import=/tmp/wolf-os-apps.gpg wolf-os-apps https://jonathonp3.github.io/wolf-os-apps/
+```
+
+3. Install Wolf-OS Custom Text Editor:
+```bash
+flatpak install --system -y wolf-os-apps org.gnome.TextEditor
+```
+
+4. Clean up:
+```bash
+rm /tmp/wolf-os-apps.gpg
+```
+
+## How to build
+Clone the repository:
+```bash
 git clone git@github.com:jonathonp3/wolf-oss-apps.git
 cd wolf-oss-apps
 ```
-
-Set up remotes
+Set up remotes:
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```
-Run the theme injector
+Run the theme injector:
 ```bash
 python3 update_manifest.py
 ```
@@ -39,15 +66,15 @@ python3 update_manifest.py
 ## Build Instructions
 Stable Version (v50)
 
-1. Install SDK
+1. Install SDK:
 ```bash
 flatpak install --user -y flathub org.gnome.Sdk//50 org.gnome.Platform//50
 ```
-2. Build
+2. Build:
 ```bash
 flatpak run org.flatpak.Builder --force-clean --ccache --disable-rofiles-fuse --repo=repo-stable build-dir-stable org.gnome.TextEditor.json
 ```
-3. Bundle & Install
+3. Bundle & Install:
 ```bash
 flatpak build-bundle repo-stable gnome-text-editor-stable.flatpak org.gnome.TextEditor stable
 flatpak install --user --reinstall gnome-text-editor-stable.flatpak
@@ -67,6 +94,3 @@ rm -rf build-dir-stable repo-stable .flatpak-builder
 ```
 3. Rebuild: Run the Build, Bundle, and Install commands above.
 
-
-***
-ython3 update_manifest.py
