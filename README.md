@@ -48,6 +48,17 @@ flatpak install --system -y wolf-os-apps org.gnome.TextEditor
 rm /tmp/wolf-os-apps.gpg
 ```
 
+Optional:
+List remotes:
+```bash
+flatpak remotes --show-details
+```
+
+List wolf-os-apps
+```bash
+flatpak remote-ls wolf-os-apps
+```
+
 ## How to build
 Clone the repository:
 ```bash

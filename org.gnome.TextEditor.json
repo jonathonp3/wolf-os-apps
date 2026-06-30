@@ -1,222 +1,91 @@
 {
-  "app-id": "org.gnome.TextEditor",
-  "runtime": "org.gnome.Platform",
-  "runtime-version": "50",
-  "sdk": "org.gnome.Sdk",
-  "command": "gnome-text-editor",
-  "branch": "stable",
-  "finish-args": [
-    "--device=dri",
-    "--share=ipc",
-    "--socket=fallback-x11",
-    "--socket=wayland",
-    "--talk-name=org.freedesktop.FileManager1",
-    "--filesystem=host",
-    "--filesystem=xdg-run/gvfs",
-    "--filesystem=xdg-run/gvfsd",
-    "--talk-name=org.gtk.vfs.*",
-    "--env=GTK_SOURCE_STYLE_SCHEME=solarized-light-cosmic-latte"
-  ],
-  "cleanup": [
-    "/include",
-    "/lib/girepository-1.0",
-    "/lib/pkgconfig",
-    "/man",
-    "/share/aclocal",
-    "/share/doc",
-    "/share/gir-1.0",
-    "/share/gtk-doc",
-    "/share/man",
-    "/share/pkgconfig",
-    "*.la",
-    "*.a"
-  ],
-  "modules": [
-    {
-      "name": "custom-gtksource-styles",
-      "buildsystem": "simple",
-      "build-commands": [
-        "mkdir -p /app/share/gtksourceview-5/styles",
-        "install -Dm644 andromeda-deep-space.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 ant-clean-light.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 deep-oceanic-navy.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 dracula-official-high-contrast.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 dracula-official.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 kimi-dark-modern-high-contrast.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 kimi-dark-modern-muted.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 kimi-dark-modern-soft.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 kimi-dark-modern.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 nord-light-arctic.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-champagne.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-cosmic-latte.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-extra-warm.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-golden-parchment.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-golden-sand.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-lavender-blush.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-light-gold.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 solarized-light-muted-canvas.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 space-kde-slate-high-contrast.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 space-kde-slate-soft-high-contrast.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 space-kde-slate.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 sweet-neon-synthwave-high-contrast-red.xml /app/share/gtksourceview-5/styles/",
-        "install -Dm644 sweet-neon-synthwave.xml /app/share/gtksourceview-5/styles/"
-      ],
-      "sources": [
+    "id": "org.gnome.TextEditor",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "50",
+    "sdk": "org.gnome.Sdk",
+    "command": "gnome-text-editor",
+    "finish-args": [
+        "--device=dri",
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--talk-name=org.freedesktop.FileManager1",
+        "--filesystem=host",
+        "--filesystem=xdg-run/gvfs",
+        "--filesystem=xdg-run/gvfsd",
+        "--talk-name=org.gtk.vfs.*"
+    ],
+    "cleanup": [
+        "/include",
+        "/lib/girepository-1.0",
+        "/lib/pkgconfig",
+        "/man",
+        "/share/aclocal",
+        "/share/doc",
+        "/share/gir-1.0",
+        "/share/gtk-doc",
+        "/share/man",
+        "/share/pkgconfig",
+        "*.la",
+        "*.a"
+    ],
+    "modules": [
         {
-          "type": "file",
-          "path": "andromeda-deep-space.xml"
+            "name": "libeditorconfig",
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DBUILD_DOCUMENTATION=OFF",
+                "-DINSTALL_HTML_DOC=OFF"
+            ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/editorconfig/editorconfig-core-c.git",
+                    "tag": "v0.12.5",
+                    "commit": "f6b0ca395149b5a2fbd56a488cae30306a58170f",
+                    "x-checker-data": {
+                        "type": "git",
+                        "tag-pattern": "^v([\\d.]+)$",
+                        "versions": {
+                            "==": "0.12.5"
+                        }
+                    }
+                }
+            ]
         },
         {
-          "type": "file",
-          "path": "ant-clean-light.xml"
+            "name": "libspelling",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dintrospection=disabled",
+                "-Ddocs=false"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://download.gnome.org/sources/libspelling/0.4/libspelling-0.4.10.tar.xz",
+                    "sha256": "56e3f01a3a18b575beea4c34349f99cdaba316e1f7c271b1231f7bcf5d9af73b",
+                    "x-checker-data": {
+                        "type": "gnome",
+                        "name": "libspelling"
+                    }
+                }
+            ]
         },
         {
-          "type": "file",
-          "path": "deep-oceanic-navy.xml"
-        },
-        {
-          "type": "file",
-          "path": "dracula-official-high-contrast.xml"
-        },
-        {
-          "type": "file",
-          "path": "dracula-official.xml"
-        },
-        {
-          "type": "file",
-          "path": "kimi-dark-modern-high-contrast.xml"
-        },
-        {
-          "type": "file",
-          "path": "kimi-dark-modern-muted.xml"
-        },
-        {
-          "type": "file",
-          "path": "kimi-dark-modern-soft.xml"
-        },
-        {
-          "type": "file",
-          "path": "kimi-dark-modern.xml"
-        },
-        {
-          "type": "file",
-          "path": "nord-light-arctic.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-champagne.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-cosmic-latte.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-extra-warm.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-golden-parchment.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-golden-sand.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-lavender-blush.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-light-gold.xml"
-        },
-        {
-          "type": "file",
-          "path": "solarized-light-muted-canvas.xml"
-        },
-        {
-          "type": "file",
-          "path": "space-kde-slate-high-contrast.xml"
-        },
-        {
-          "type": "file",
-          "path": "space-kde-slate-soft-high-contrast.xml"
-        },
-        {
-          "type": "file",
-          "path": "space-kde-slate.xml"
-        },
-        {
-          "type": "file",
-          "path": "sweet-neon-synthwave-high-contrast-red.xml"
-        },
-        {
-          "type": "file",
-          "path": "sweet-neon-synthwave.xml"
+            "name": "gnome-text-editor",
+            "buildsystem": "meson",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://download.gnome.org/sources/gnome-text-editor/50/gnome-text-editor-50.1.tar.xz",
+                    "sha256": "f68036b09d378faa883bfe936e479c6ff37027c2ffed101daf912df70c51d0e6",
+                    "x-checker-data": {
+                        "type": "gnome",
+                        "name": "gnome-text-editor"
+                    }
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "libeditorconfig",
-      "buildsystem": "cmake-ninja",
-      "config-opts": [
-        "-DBUILD_DOCUMENTATION=OFF",
-        "-DINSTALL_HTML_DOC=OFF"
-      ],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/editorconfig/editorconfig-core-c.git",
-          "tag": "v0.12.10",
-          "commit": "99d757d197677d270644791f13fffe2644659985",
-          "x-checker-data": {
-            "type": "git",
-            "tag-pattern": "^v([\\d.]+)$"
-          }
-        },
-        {
-          "type": "patch",
-          "path": "patches/fix-strncpy-buffer-truncation.patch"
-        }
-      ]
-    },
-    {
-      "name": "libspelling",
-      "buildsystem": "meson",
-      "config-opts": [
-        "-Dintrospection=disabled",
-        "-Ddocs=false"
-      ],
-      "sources": [
-        {
-          "type": "archive",
-          "url": "https://download.gnome.org/sources/libspelling/0.4/libspelling-0.4.10.tar.xz",
-          "sha256": "56e3f01a3a18b575beea4c34349f99cdaba316e1f7c271b1231f7bcf5d9af73b",
-          "x-checker-data": {
-            "type": "gnome",
-            "name": "libspelling"
-          }
-        }
-      ]
-    },
-    {
-      "name": "gnome-text-editor",
-      "buildsystem": "meson",
-      "sources": [
-        {
-          "type": "archive",
-          "url": "https://download.gnome.org/sources/gnome-text-editor/50/gnome-text-editor-50.0.tar.xz",
-          "sha256": "9dc299da4daa085423b5d48db59f0021ad55e74143a5cb8ab2e5ffe17967f45b",
-          "x-checker-data": {
-            "type": "gnome",
-            "name": "gnome-text-editor"
-          }
-        },
-        {
-          "type": "patch",
-          "path": "patches/metainfo-reorder-releases.patch"
-        }
-      ]
-    }
-  ]
+    ]
 }
